@@ -9,27 +9,27 @@ import org.bytedeco.javacv.{ FrameGrabber, Frame }
 import org.bytedeco.javacv.FrameGrabber.ImageMode
 
 /**
-  * Created by Lloyd on 2/13/16.
-  */
+ * Created by Lloyd on 2/13/16.
+ */
 
 object Webcam {
 
   /**
-    * Builds a Frame [[Source]]
-    *
-    * @param deviceId device ID for the webcam
-    * @param dimensions
-    * @param bitsPerPixel
-    * @param imageMode
-    * @param system ActorSystem
-    * @return a Source of [[Frame]]s
-    */
+   * Builds a Frame [[Source]]
+   *
+   * @param deviceId device ID for the webcam
+   * @param dimensions
+   * @param bitsPerPixel
+   * @param imageMode
+   * @param system ActorSystem
+   * @return a Source of [[Frame]]s
+   */
   def source(
-              deviceId: Int,
-              dimensions: Dimensions,
-              bitsPerPixel: Int = CV_8U,
-              imageMode: ImageMode = ImageMode.COLOR
-            )(implicit system: ActorSystem): Source[Frame, Unit] = {
+    deviceId: Int,
+    dimensions: Dimensions,
+    bitsPerPixel: Int = CV_8U,
+    imageMode: ImageMode = ImageMode.COLOR
+  )(implicit system: ActorSystem): Source[Frame, Unit] = {
     val props = Props(
       new WebcamFramePublisher(
         deviceId = deviceId,
@@ -47,12 +47,12 @@ object Webcam {
 
   // Building a started grabber seems finicky if not synchronised; there may be some freaky stuff happening somewhere.
   private def buildGrabber(
-                            deviceId: Int,
-                            imageWidth: Int,
-                            imageHeight: Int,
-                            bitsPerPixel: Int,
-                            imageMode: ImageMode
-                          ): FrameGrabber = synchronized {
+    deviceId: Int,
+    imageWidth: Int,
+    imageHeight: Int,
+    bitsPerPixel: Int,
+    imageMode: ImageMode
+  ): FrameGrabber = synchronized {
     val g = FrameGrabber.createDefault(deviceId)
     g.setImageWidth(imageWidth)
     g.setImageHeight(imageHeight)
@@ -63,15 +63,15 @@ object Webcam {
   }
 
   /**
-    * Actor that backs the Akka Stream source
-    */
+   * Actor that backs the Akka Stream source
+   */
   private class WebcamFramePublisher(
-                                      deviceId: Int,
-                                      imageWidth: Int,
-                                      imageHeight: Int,
-                                      bitsPerPixel: Int,
-                                      imageMode: ImageMode
-                                    ) extends ActorPublisher[Frame] with ActorLogging {
+      deviceId: Int,
+      imageWidth: Int,
+      imageHeight: Int,
+      bitsPerPixel: Int,
+      imageMode: ImageMode
+  ) extends ActorPublisher[Frame] with ActorLogging {
 
     private implicit val ec = context.dispatcher
 
