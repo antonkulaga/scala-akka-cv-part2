@@ -8,10 +8,11 @@ import akka.stream.scaladsl.Sink
 import com.beachape.analysis.FaceDetector
 import com.beachape.transform.{ WithGrey, Flip, MediaConversion }
 import com.beachape.modify.FaceDrawer
-import com.beachape.video.{ GrabberBuilder, Dimensions, Webcam }
+import com.beachape.video._
 import org.bytedeco.javacv.CanvasFrame
 
 import scala.swing._
+import scala.util.Try
 
 object WebcamFaceDetector extends SimpleSwingApplication {
 
@@ -70,25 +71,42 @@ object WebcamFaceDetector extends SimpleSwingApplication {
     implicit val system = ActorSystem()
     implicit val materializer = ActorMaterializer()
 
-    val webcamSource = GrabberBuilder.webcamSource(deviceId = 0, dimensions = faceDetector.dimensions) //Webcam.source(deviceId = 0, dimensions = faceDetector.dimensions)
+    val file = "/home/pps/antonkulaga/Téléchargements/brepressilator-01-bwfluor.avi"
+    //val file = "/home/pps/antonkulaga/Vidéos/Heart - What About Love-.mp4"
+
+    val webcamSource = GrabberBuilder.fileSource(file, dimensions = faceDetector.dimensions)
+    //val webcamSource = GrabberBuilder.webcamSource(deviceId = 0, dimensions = faceDetector.dimensions) //Webcam.source(deviceId = 0, dimensions = faceDetector.dimensions)
 
     val canvas = new CanvasFrame("Webcam")
     //  //Set Canvas frame to close on exit
-    canvas.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE)
+    //canvas.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE)
+    /*
+        val faceDrawer = new FaceDrawer()
 
-    val faceDrawer = new FaceDrawer()
+        val flow = webcamSource
+          .map(MediaConversion.toMat) // most OpenCV manipulations require a Matrix
+          .map(Flip.horizontal)
+          .map(WithGrey.build)
+          .map(faceDetector.detect)
+          .map((faceDrawer.drawFaces _).tupled)
+          .map(MediaConversion.toFrame) // convert back to a frame
+          .map(canvas.showImage)
+          .to(Sink.ignore)
+    flow.run()
+    */
 
-    val flow = webcamSource
+    val graph = webcamSource
+
       .map(MediaConversion.toMat) // most OpenCV manipulations require a Matrix
-      .map(Flip.horizontal)
-      .map(WithGrey.build)
-      .map(faceDetector.detect)
-      .map((faceDrawer.drawFaces _).tupled)
+      //.map(Flip.horizontal)
       .map(MediaConversion.toFrame) // convert back to a frame
-      .map(canvas.showImage)
+
+      .map(img => {
+        canvas.showImage(img)
+      })
       .to(Sink.ignore)
 
-    flow.run()
+    graph.run()
 
   }
 }

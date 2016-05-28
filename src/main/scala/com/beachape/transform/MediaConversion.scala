@@ -7,6 +7,9 @@ import org.bytedeco.javacpp.opencv_core._
 import org.bytedeco.javacpp.opencv_imgproc
 import org.bytedeco.javacpp.opencv_imgproc._
 import org.bytedeco.javacv.{ Java2DFrameConverter, Frame, OpenCVFrameConverter }
+import OpenCVFrameConverter.ToMat
+
+import scala.util.{ Failure, Try }
 
 /**
  * Created by Lloyd on 2/15/16.
@@ -29,12 +32,31 @@ object MediaConversion {
   /**
    * Returns an OpenCV Mat for a given JavaCV frame
    */
-  def toMat(frame: Frame): Mat = frameToMatConverter.get().convert(frame)
+  def toMat(frame: Frame): Mat = {
+    //ToMat.convert(frame)
+    val converter = new OpenCVFrameConverter.ToMat()
+    Try(converter.convert(frame)) match {
+      case Failure(f) =>
+        println("FAILURE TO MAT  == " + f)
+        println("frame was = " + frame)
+      case _ =>
+    }
+    converter.convertToMat(frame)
+    //frameToMatConverter.get().convert(frame)
+  }
 
   /**
    * Returns a JavaCV Frame for a given OpenCV Mat
    */
-  def toFrame(mat: Mat): Frame = frameToMatConverter.get().convert(mat)
+  def toFrame(mat: Mat): Frame = {
+    //frameToMatConverter.get().convert(mat)
+    val converter = new OpenCVFrameConverter.ToMat()
+    Try(converter.convert(mat)) match {
+      case Failure(f) => println("FAILURE TO FRAME == " + f)
+      case _ =>
+    }
+    converter.convert(mat)
+  }
 
   /**
    * Clone the given OpenCV matrix and return an equalised version (CLAHE (Contrast Limited Adaptive Histogram Equalization))

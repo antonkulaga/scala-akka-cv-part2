@@ -23,6 +23,13 @@ val root = Project(id = "scala-cv-part2", base = file("."))
 	  }
 	},
 
+	javaCppPresetLibs ++= Seq(
+		"ffmpeg" -> "2.8.1",
+		"opencv" -> "3.0.0",
+		"videoinput" -> "0.200"
+
+	),
+
 	// Allows us to stop when using run without killing SBT
 	fork in run := true
 	)

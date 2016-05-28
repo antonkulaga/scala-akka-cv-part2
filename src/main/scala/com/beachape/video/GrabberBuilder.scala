@@ -5,11 +5,13 @@ import akka.stream.actor.ActorPublisher
 import akka.stream.actor.ActorPublisherMessage.{ Cancel, Request }
 import akka.stream.scaladsl.Source
 import org.bytedeco.javacpp.opencv_core._
-import org.bytedeco.javacv.{ OpenCVFrameGrabber, FrameGrabber, Frame }
+import org.bytedeco.javacv.{ FFmpegFrameGrabber, OpenCVFrameGrabber, FrameGrabber, Frame }
 import org.bytedeco.javacv.FrameGrabber.ImageMode
 
+import scala.util.Try
+
 case class WebCamGrabberBuilder(
-  deviceId: Int,
+    deviceId: Int,
     dimensions: Dimensions,
     bitsPerPixel: Int = CV_8U,
     imageMode: ImageMode = ImageMode.COLOR
@@ -27,9 +29,21 @@ case class WebCamGrabberBuilder(
   }
 }
 
-case class FileGrabberBuilder(file: String) extends GrabberBuilder {
+case class FileGrabberBuilder(file: String, dimensions: Dimensions,
+    bitsPerPixel: Int = CV_8U,
+    imageMode: ImageMode = ImageMode.COLOR) extends GrabberBuilder {
   override def startGrab(): FrameGrabber = synchronized { //not sure if it is needed at all
-    new OpenCVFrameGrabber(file)
+    val imageWidth = dimensions.width
+    val imageHeight = dimensions.height
+    val g = new FFmpegFrameGrabber(file)
+    g.setFormat("avi")
+    g.setAudioChannels(0)
+    g.setImageWidth(418)
+    g.setImageHeight(299)
+    g.setBitsPerPixel(bitsPerPixel)
+    g.setImageMode(imageMode)
+    g.start()
+    g
   }
 
 }
@@ -40,10 +54,14 @@ trait GrabberBuilder {
 
 object GrabberBuilder {
 
-  def fileSource(file: String = "video.mp4")(implicit system: ActorSystem) = {
+  def fileSource(file: String, dimensions: Dimensions,
+    bitsPerPixel: Int = CV_8U,
+    imageMode: ImageMode = ImageMode.COLOR)(implicit system: ActorSystem) = {
     val props = Props(
       new GrabberPublisher(
-        new FileGrabberBuilder(file)
+        new FileGrabberBuilder(file, dimensions = dimensions,
+          bitsPerPixel = bitsPerPixel,
+          imageMode = imageMode)
       )
     )
     val ref = system.actorOf(props)
@@ -89,19 +107,40 @@ class GrabberPublisher(builder: GrabberBuilder) extends ActorPublisher[Frame] wi
   }
 
   private def emitFrames(): Unit = {
+    if (totalDemand > 0) {
+      Try {
+        grabFrame().foreach {
+          case f =>
+            onNext(f)
+        }
+      }
+
+      self ! Continue
+    } else {
+      println("no demand")
+    }
+    /*
     if (isActive && totalDemand > 0) {
       /*
         Grabbing a frame is a blocking I/O operation, so we don't send too many at once.
        */
-      grabFrame().foreach(onNext)
+      Try {
+        grabFrame().foreach {
+          case f =>
+            onNext(f)
+        }
+      }
       if (totalDemand > 0) {
         self ! Continue
       }
     }
+    */
   }
 
   private def grabFrame(): Option[Frame] = {
-    Option(grabber.grab())
+    val frame = grabber.grab()
+    println("grab " + frame + " with rate " + grabber.getFrameRate)
+    Option(frame)
   }
 }
 
