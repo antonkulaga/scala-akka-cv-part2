@@ -8,10 +8,6 @@ import org.bytedeco.javacpp.opencv_core._
 import org.bytedeco.javacv.{ FrameGrabber, Frame }
 import org.bytedeco.javacv.FrameGrabber.ImageMode
 
-/**
- * Created by Lloyd on 2/13/16.
- */
-
 object Webcam {
 
   /**
@@ -29,7 +25,7 @@ object Webcam {
     dimensions: Dimensions,
     bitsPerPixel: Int = CV_8U,
     imageMode: ImageMode = ImageMode.COLOR
-  )(implicit system: ActorSystem): Source[Frame, Unit] = {
+  )(implicit system: ActorSystem) = {
     val props = Props(
       new WebcamFramePublisher(
         deviceId = deviceId,
@@ -76,7 +72,7 @@ object Webcam {
     private implicit val ec = context.dispatcher
 
     // Lazy so that nothing happens until the flow begins
-    private lazy val grabber = buildGrabber(
+    private lazy val grabber: FrameGrabber = buildGrabber(
       deviceId = deviceId,
       imageWidth = imageWidth,
       imageHeight = imageHeight,

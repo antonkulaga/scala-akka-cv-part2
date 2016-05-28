@@ -8,7 +8,7 @@ import akka.stream.scaladsl.Sink
 import com.beachape.analysis.FaceDetector
 import com.beachape.transform.{ WithGrey, Flip, MediaConversion }
 import com.beachape.modify.FaceDrawer
-import com.beachape.video.{ Dimensions, Webcam }
+import com.beachape.video.{ GrabberBuilder, Dimensions, Webcam }
 import org.bytedeco.javacv.CanvasFrame
 
 import scala.swing._
@@ -70,7 +70,7 @@ object WebcamFaceDetector extends SimpleSwingApplication {
     implicit val system = ActorSystem()
     implicit val materializer = ActorMaterializer()
 
-    val webcamSource = Webcam.source(deviceId = 0, dimensions = faceDetector.dimensions)
+    val webcamSource = GrabberBuilder.webcamSource(deviceId = 0, dimensions = faceDetector.dimensions) //Webcam.source(deviceId = 0, dimensions = faceDetector.dimensions)
 
     val canvas = new CanvasFrame("Webcam")
     //  //Set Canvas frame to close on exit
